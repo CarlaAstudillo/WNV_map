@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>West Nile Virus Map</title>
+    <meta name="description" content="This map shows the number of cases, along with the incidence rates of the West Nile Virus. Data Source from CDC.">
+    <meta name="author" content="Patch.com">
+    <link href="css/wnv_map.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/leaflet.css" />
+    
+    <!--[if IE]><link rel="stylesheet" href="../css/leaflet.ie.css" /><![endif]-->
+
+    <script type="text/javascript">
+    	var wnv, map;
+    
+// Create and load map using MapBox Tile
+  	  function initialize() {
+  			map = new L.Map('map_canvas').setView(new L.LatLng(38.822591,-100.195313), 4); 
+  			 var mapboxUrl = 'http://{s}.tiles.mapbox.com/v3/cartodb.map-1nh578vv/{z}/{x}/{y}.png',
+            mapbox = new L.TileLayer(mapboxUrl, {maxZoom: 17,attribution:"Powered by Leaflet and Mapbox"});
+        map.addLayer(mapbox,true);
+              
+
+    		
+          
+          
+
+// Gets the points from CartoDB and makes a layer
+
+
+var query="SELECT * FROM {{table_name}}";
+
+        wnv = new L.CartoDBLayer({
+          map: map,
+          user_name:'patchdata',
+          table_name: 'wnv_nationwide_cases',
+          query: query,
+          interactivity: "cartodb_id, cases, county_state, pop, rate",
+
+
+
+// Create Label that pops up when you hover over a marker
+
+          featureOver: function(ev,latlng,pos,data) {
+            document.body.style.cursor = "pointer";
+            showHover(data,pos)
+            function showHover(data,point) {
+            var html = "";
+            html += "<home_name>" + data.county_state + "</home_name>";
+             $("#hover").html(html);
+        $("#hover").css({top: 10 + 'px', left: 50 + 'px'})
+         $("#hover").fadeIn();
+            }
+            
+           
+
+// Create Search Bar (Need to Fix)
+            
+          },
+          
+          
+// Makes label disappear when you hover away from a marker
+          featureOut: function() {
+            document.body.style.cursor = "default";
+            $("#hover").hide();
+          },
+          
+// Makes pop-up box with all of the info appear when you click on marker
+          featureClick: function(ev,latlng,pos,data) {
+          document.body.style.cursor = "pointer";
+         
+          $("#hover").hide();
+            showTooltip(data,pos)
+            showHover(data,pos).stop();
+             function showTooltip(data,point) {
+              $("#hover").hide();
+        var html = "";
+        html += "<label onclick=" + btnFunction() + ">X</label><market>" + data.county_state +"</market>";
+        html += "<label>" + data.cases + " case(s) among " + data.pop + " people.</label>";
+        $("#tooltip").html(html);
+        $("#tooltip").css({left: (point.x + 5) + 'px', top: (point.y - 60) + 'px'})
+         $("#tooltip").fadeIn();
+          
+         }
+              
+          },
+          
+          
+          
+          auto_bound: false
+        });
+
+
+wnv_rate = new L.CartoDBLayer({
+          map: map,
+          user_name:'patchdata',
+          table_name: 'wnv_nationwide_rate',
+          query: query,
+          interactivity: "cartodb_id, cases, county_state, pop, rate",
+
+
+
+// Create Label that pops up when you hover over a marker
+
+          featureOver: function(ev,latlng,pos,data) {
+            document.body.style.cursor = "pointer";
+            showHover(data,pos)
+            function showHover(data,point) {
+            var html = "";
+            html += "<home_name>" + data.county_state + "</home_name>";
+             $("#hover").html(html)
+             $("#hover").css({left: (point.x + 5) + 'px', top: (point.y - 60) + 'px'})
+         $("#hover").fadeIn();
+            }
+            
+           
+
+// Create Search Bar (Need to Fix)
+            
+          },
+          
+          
+// Makes label disappear when you hover away from a marker
+          featureOut: function() {
+            document.body.style.cursor = "default";
+            $("#hover").hide();
+          },
+          
+// Makes pop-up box with all of the info appear when you click on marker
+          featureClick: function(ev,latlng,pos,data) {
+          document.body.style.cursor = "pointer";
+         
+          $("#hover").hide();
+            showTooltip(data,pos)
+            showHover(data,pos).stop();
+             function showTooltip(data,point) {
+              $("#hover").hide();
+        var html = "";
+        html += "<button onclick=" + btnFunction() + ">X</button><market>" + data.county_state +"</market>";
+        html += "Incidence rate: " + data.rate + "";
+        $("#tooltip").html(html);
+        $("#tooltip").css({left: (point.x + 5) + 'px', top: (point.y - 60) + 'px'})
+         $("#tooltip").fadeIn();
+          
+         }
+              
+          },
+          
+          
+          
+          auto_bound: false
+        });
+
+// Adds CartoDB layer with all of the points to the Map Tile
+        map.addLayer(wnv);
+        map.addLayer(wnv_rate);
+        
+wnv_rate.hide();
+                  
+        
+        
+         new L.Control.GeoSearch({
+            provider: new L.GeoSearch.Provider.Google()
+        }).addTo(map_canvas); 
+        
+        
+
+      function btnFunction()
+{
+document.onclick=function(){ $("#vid").hide();
+$("#tooltip").hide();
+ $("#hover").show();
+};
+
+
+
+}
+  	  
+}   
+
+var southWest = new L.LatLng(40.546157,-74.443359),
+    northEast = new L.LatLng(40.873026,-73.498535),
+    bounds = new L.LatLngBounds(southWest, northEast);
+
+function changeLayer(layer) {
+          if (layer=='Cases') {
+           wnv_rate.hide();
+         wnv.show();
+              wnv.setQuery("SELECT * FROM wnv_nationwide_cases");
+          
+          } else if (layer=='Rates') {
+          wnv.hide();
+          wnv_rate.show();
+              wnv_rate.setQuery("SELECT * FROM wnv_nationwide_rate")
+             
+            
+         
+          
+  	  }
+  	  
+  	  else if (layer=='Local') {
+             
+          map.fitBounds([
+    [40.546157,-74.443359],
+    [40.873026,-73.498535]
+]);  
+         
+          
+  	  }
+  	   else if (layer=='Nationwide') {
+             
+          map.fitBounds([
+    [26.27371,-125.33203],
+    [46.55886,-60.46875]
+]);  
+         
+          
+  	  }
+  	  } </script>
+    
+  </head>
+  <body onload="initialize()">
+  
+  <div class="alert alert-info" id="hover">
+      <p>Hover</p>
+      
+      
+  
+    
+      
+    </div>  
+  
+   <div class="alert alert-info" id="tooltip">
+      <p>Tooltip</p>
+      
+      
+  
+    
+      
+    </div>  
+    
+    
+    
+<!--   The Map -->
+  <div id="content">
+            <button class="btn" onClick="changeLayer('Cases')">Number of Human Cases</button>
+            <button class="btn" onClick="changeLayer('Rates')">Incidence Rate by 10,000 people</button>
+               </div>
+  <div id="map_canvas"></div>
+  
+<!--   These are the checkboxes on the left (Need to Fix) -->
+  
+    
+   
+    <div id="locate">
+    
+            <button class="btn" onClick="changeLayer('Nationwide')">Nationwide</button>
+            <button class="btn" onClick="changeLayer('Local')">Local</button>
+            </div>
+            
+             <div id="legend">
+<p id="googft-legend-title">Number of Starbucks<br> per Zip Code</p>
+<div>
+<span class="googft-legend-swatch" style="background-color: #ffffff"></span>
+<span class="googft-legend-range">0</span>
+</div>
+<div>
+<span class="googft-legend-swatch" style="background-color: #a5ef63"></span>
+<br />
+</div>
+<div>
+<span class="googft-legend-swatch" style="background-color: #50aa00"></span>
+<br />
+</div>
+<div>
+<span class="googft-legend-swatch" style="background-color: #3b8d0a"></span>
+<br />
+</div>
+<div>
+<span class="googft-legend-swatch" style="background-color: #307f0f"></span>
+<br />
+</div>
+<div>
+<span class="googft-legend-swatch" style="background-color: #267114"></span>
+<span class="googft-legend-range">5</span>
+</div>
+</div>
+            
+    
+       
+     
+     
+    
+
+ <script type="text/javascript">
+ 
+ // The code that changes the markers shown when a day of the week is checked on the left
+     
+  	  
+  	  
+  	  </script>
+
+    <script src="js/l.geosearch.provider.google.js"></script>
+    <script src="js/l.control.geosearch.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.4.4/leaflet.js"></script>
+		<script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript" src="js/wax.leaf.min.js"></script>
+    <script type="text/javascript" src="dist/cartodb-leaflet-min.js"></script>
+    <script type="text/javascript" src="dist/cartodb-popup-min.js"></script> 
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>
+
